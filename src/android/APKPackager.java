@@ -94,6 +94,7 @@ public class APKPackager  extends CordovaPlugin {
         String generatedApkPath = workdirpath+"test.apk";
         String signedApkPath=workdirpath+"test-signed.apk";
         String dexname = workdirpath+ "classes.dex";
+	File tempDir = new File(workdir,"temp");
 
         File tempres = new File(workdir,"tempres");
         File tempassets = new File(workdir,"tempasset");
@@ -110,6 +111,7 @@ public class APKPackager  extends CordovaPlugin {
             callbackContext.error("Unable to delete dirs: "+e.getMessage());
             return;
         }
+
         try {
             extractToFolder(assetsname, tempassets);
             extractToFolder(reszip, tempres);
@@ -117,7 +119,6 @@ public class APKPackager  extends CordovaPlugin {
             callbackContext.error("Unable to extract project: "+e.getMessage());
             return;
         }
-        
         try {
             // merge the supplied www & res dirs into the dummy project
             // for this to work the relative path of the supplied dir must be the same as the desired path in the APK
@@ -125,15 +126,13 @@ public class APKPackager  extends CordovaPlugin {
             mergeDirectory(wwwdir, tempassets);
             mergeDirectory(resdir, tempres);
         } catch (Exception e) {
-            Log.e(LOG_TAG, e.getMessage());
-            callbackContext.error("Error merging assets: "+e.getMessage());
+            callbackContext.error(wwwdir+" Error merging assets: "+e.getMessage());
             return;
         }
 
         try {
             mungeConfig(workdir, tempassets, tempres);
         } catch (Exception e) {
-            Log.e(LOG_TAG, e.getMessage());
             callbackContext.error("Error updating project: "+e.getMessage());
             return;
         }
@@ -142,7 +141,6 @@ public class APKPackager  extends CordovaPlugin {
             copyFile(new File(workdir,"AndroidManifest.xml"), new File(tempres,"AndroidManifest.xml"));
             mangleResources(tempres, mangledResourceDir);
         } catch (Exception e) {
-            Log.e(LOG_TAG, e.getMessage());
             callbackContext.error("Error indexing resources: "+e.getMessage());
             return;
         }
@@ -155,16 +153,17 @@ public class APKPackager  extends CordovaPlugin {
             writeZipfile(fakeResZip);
 
             ApkBuilder b = new ApkBuilder(generatedApkPath,fakeResZip.getPath(),dexname,null,null,null);
-            b.addSourceFolder( tempassets);
-            b.addSourceFolder( finalResDir);
-            b.addFile(new File(mangledResourceDir,"resources.arsc"), "resources.arsc");
-            b.addFile(new File(mangledResourceDir,"AndroidManifest.xml"),"AndroidManifest.xml");
+	    b.addSourceFolder( tempDir);
+            //b.addSourceFolder( tempassets);
+            //b.addSourceFolder( finalResDir);
+            //b.addFile(new File(mangledResourceDir,"resources.arsc"), "resources.arsc");
+            //b.addFile(new File(mangledResourceDir,"AndroidManifest.xml"),"AndroidManifest.xml");
             b.sealApk();
         } catch (Exception e) {
-            Log.e(LOG_TAG, e.getMessage());
             callbackContext.error("ApkBuilder Error: "+e.getMessage());
             return;
         }
+
 
         // sign the APK with the supplied key/cert
         try {
@@ -174,19 +173,17 @@ public class APKPackager  extends CordovaPlugin {
             zipSigner.setKeys("xx", cert, privateKey, null);
             zipSigner.signZip(generatedApkPath, signedApkPath);
         } catch (Exception e) {
-            Log.e("Signing apk", "Error: "+e.getMessage());
             callbackContext.error("ZipSigner Error: "+e.getMessage());
             return;
-        }
+	    }
 
         // After signing apk , delete intermediate stuff
         try {
             new File(generatedApkPath).delete();
             deleteDir(tempres);
             deleteDir(tempassets);
-            deleteDir(mangledResourceDir);
+            //deleteDir(mangledResourceDir);
         } catch (Exception e) {
-            Log.e(LOG_TAG, e.getMessage());
             callbackContext.error("Error cleaning up: "+e.getMessage());
             return;
         }
@@ -322,7 +319,7 @@ public class APKPackager  extends CordovaPlugin {
                 zis.closeEntry();
             }
         } catch (Exception e) {
-            Log.e(LOG_TAG, "Unzip error ", e);
+
         } finally {
             if (inputStream != null) {
                 try {

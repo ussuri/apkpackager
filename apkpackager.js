@@ -2,21 +2,22 @@
 var exec = cordova.require('cordova/exec');
 
 
-module.exports.makeapk = function(pkguri,success,failure) {
+module.exports.makeapk = function() {
 
   function pkgSuccess( apkpath ) {
-     if(success) success();
+      console.log('Succes');
+     //if(success) success();
   }
 
   function pkgFail(msg) {
     console.log('Error: ' + msg);
-    if(failure) failure(msg);
+    //if(failure) failure(msg);
   }
 
 //  function onInitFs(fs) {
 
     // need a native compatible absolute path that ends with /
-    var workdir = 'cdvfile://localhost/sdcard/Download/'; //fs.root.toURL()+'Download/';
+    var workdir = 'file:///storage/sdcard0/Download/test/'; //fs.root.toURL()+'Download/';
     var wwwdir = workdir+'wwwsrc';
     var resdir = workdir+'ressrc';
     var publicKeyURL = workdir+"pub.x509.pem";

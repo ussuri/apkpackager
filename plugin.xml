@@ -40,7 +40,6 @@
     <source-file src="src/android/aapt/TypeBundle.java" target-dir="src/org/chromium/aapt" />
     <source-file src="src/android/aapt/TypeSpec.java" target-dir="src/org/chromium/aapt" />
     <source-file src="src/android/aapt/Value.java" target-dir="src/org/chromium/aapt" />
-    <source-file src="src/android/aapt/XMLNode.java" target-dir="src/org/chromium/aapt" />
 
     <source-file src="lib/libs/kellinwood-logging-android-1.4.jar" target-dir="libs" />
     <source-file src="lib/libs/kellinwood-logging-lib-1.1.jar" target-dir="libs" />
