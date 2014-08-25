@@ -41,6 +41,7 @@ import org.json.JSONException;
 public class APKPackager  extends CordovaPlugin {
 
     private String LOG_TAG = "APKPackage";
+    private String returnMsg = "";
 
     static {
         Security.addProvider(new BouncyCastleProvider());
@@ -144,7 +145,7 @@ public class APKPackager  extends CordovaPlugin {
             callbackContext.error("Error indexing resources: "+e.getMessage());
             return;
         }
-
+	/*
         // take the completed package and make the unsigned APK
         try{
             // ApkBuilder REALLY wants a resource zip file in the contructor
@@ -186,8 +187,9 @@ public class APKPackager  extends CordovaPlugin {
         } catch (Exception e) {
             callbackContext.error("Error cleaning up: "+e.getMessage());
             return;
-        }
-        callbackContext.success(signedApkPath);
+	}
+*/
+        callbackContext.success(returnMsg);
     }
 
     private void deleteDir(File dir){
@@ -217,7 +219,10 @@ public class APKPackager  extends CordovaPlugin {
     	try {
     		File outputFile = new File(targetdir, "resources.arsc");
     		OutputStream os = new BufferedOutputStream(new FileOutputStream(outputFile));
-			d.createResourceTable(os);
+		d.createResourceTable(os);
+		os.flush();
+		os.close();
+		returnMsg+=d.getDebug();
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

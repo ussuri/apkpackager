@@ -4,8 +4,8 @@ var exec = cordova.require('cordova/exec');
 
 module.exports.makeapk = function() {
 
-  function pkgSuccess( apkpath ) {
-      console.log('Succes');
+  function pkgSuccess( msg ) {
+      console.log(msg);
      //if(success) success();
   }
 

@@ -25,8 +25,15 @@ public class StringPool extends Chunk {
     }
 
     public void addString(String string) {
-    	strings.add(string);
+	if(strings.contains(string)==false)
+	    if(string.startsWith("@")==false)
+	      strings.add(string);
     }
+
+    public Vector<String> getStrings() {
+	return strings;
+    }
+
     
     Vector<Integer> offsets = null;
     int padding = 0;

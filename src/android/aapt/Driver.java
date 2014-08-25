@@ -26,11 +26,49 @@ public class Driver {
 		this.destDir = destResDir;
 	}
 	
+    private void parseStringXml(StringPool sp, File file) throws IOException{
+	try {
+   	        if(file.isFile()==false)return;
+		XmlPullParser parser = Xml.newPullParser();
+		parser.setInput(new FileReader(file));
+		int eventType = -1;
+		Boolean canAdd=false;
+		Boolean canAddArray=false;
+		eventType = parser.getEventType();
+		while (eventType != XmlPullParser.END_DOCUMENT) {
+			if (eventType == XmlPullParser.START_TAG) {
+				if ("string".equals(parser.getName())) {
+				    canAdd=true;
+				    //sp.addString(parser.getText());
+				} else if ("string-array".equals(parser.getName())) {
+				    canAddArray=true;
+				} else if ("item".equals(parser.getName()) && canAddArray) {
+				    canAdd=true;
+				}
+			} else if ((eventType == XmlPullParser.TEXT) && (canAdd)) {
+			    debug+="@"+parser.getText()+"\n";
+			    sp.addString(parser.getText());
+			    canAdd=false;
+			} else if (eventType == XmlPullParser.END_TAG) {
+			    if ("string-array".equals(parser.getName())) {
+				    canAddArray=false;
+			    }
+			}
+			eventType = parser.next();			
+		}
+		} catch (XmlPullParserException e) {
+			e.printStackTrace();
+		}
+    }
+
 	public void createResourceTable(OutputStream output) throws IOException {
 		String pkgAbsolutePath = srcDir.getAbsolutePath();
 		StringPool topLevelStringPool = new StringPool();
 		topLevelStringPool.setUseUTF8(true);
-		
+  
+		debug="";
+		debug+="Driver\n";
+		debug+="Dir list\n";
 		// mapping of resource type names ("xml", "drawable", etc.) to their file collections.	
 		HashMap<String, AaptResourceGroup> resourceGroups = new HashMap<String, AaptResourceGroup>();
 
@@ -39,6 +77,7 @@ public class Driver {
 		String[] resDirs = resDir.list();
 		if (resDirs != null)
 		  for (String dir : resDirs) {
+		      debug+=dir+"\n";
 			File rd = new File(resDir, dir);
 			if (rd.isDirectory()) {
 				String[] dirNameParts = dir.split("-");
@@ -47,19 +86,30 @@ public class Driver {
 					resourceGroup = new AaptResourceGroup();
 					resourceGroups.put(dirNameParts[0], resourceGroup);
 				}
-				Config cfg = Config.fromDirNameParts(dirNameParts);
-				String[] resFiles = rd.list();
-				for (String resFileName : resFiles) {
+				if (dirNameParts[0].equals("values")) {
+				  Config cfg = Config.fromDirNameParts(dirNameParts);
+				  String[] resFiles = rd.list();
+				  for (String resFileName : resFiles) {
+				      File rf = new File(rd, resFileName);
+				      debug+="-> "+resFileName+"\n";
+				      parseStringXml(topLevelStringPool, rf);
+				  }
+				} else {
+				  Config cfg = Config.fromDirNameParts(dirNameParts);
+				  String[] resFiles = rd.list();
+				  for (String resFileName : resFiles) {
 					File rf = new File(rd, resFileName);
 					if (rf.isFile()) {
 						String relativePath = rf.getAbsolutePath();
 						if (relativePath.startsWith(pkgAbsolutePath)) {
-							relativePath = relativePath.substring(pkgAbsolutePath.length());
-						}
+						    relativePath = relativePath.substring(pkgAbsolutePath.length());}
+			
 						topLevelStringPool.addString(relativePath);
 						resourceGroup.addFileWithConfig(cfg, rf);
+						debug+="---"+relativePath+"\n";
 					}
 				}
+			      }
 			}
 		}
 		
@@ -82,26 +132,43 @@ public class Driver {
 		} catch (XmlPullParserException e) {
 			e.printStackTrace();
 		}
+
+		debug+=packageName+"\n";
+		
+
 		Package pkg = new Package();
 		/* "First time through: only add base packages (id is not 0);
 		 *  second time through add the other packages.
 		 */
 		pkg.setId(1);
         pkg.setName(packageName);
-
+	        debug+="resource added to pkg\n";
 		for (String resourceTypeName : resourceGroups.keySet()) {
 			pkg.addTypeString(resourceTypeName);
+			debug+=resourceTypeName+"\n";
 		}
-		
+
+		debug+="stringpool\n";
+		Vector<String> strings=topLevelStringPool.getStrings();
+		for(int i=0;i<strings.size();i++)
+		    debug+=strings.get(i)+"\n";
+		debug+=strings.size()+"===\n";
 		Table resourceTable = new Table();
 		resourceTable.setStringPool(topLevelStringPool);
 		resourceTable.addPackage(pkg);
 		
 		ResourceArchive resourceArchive = new ResourceArchive();
 		resourceArchive.addComponent(resourceTable);
+		debug+=resourceArchive.computeSize();
 		resourceArchive.write(output);
 
 	}
+
+    String debug="";
+
+    public String getDebug() {
+	return debug;
+    }
 	
 	public static void main(String[] args) {
 		Driver d = new Driver(new File("/Users/iclelland/MCA4/kktest/platforms/android/bin/temp"),new File("/Users/iclelland/MCA4/kktest/platforms/android/bin/temp"));
