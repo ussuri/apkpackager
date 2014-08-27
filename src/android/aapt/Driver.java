@@ -10,6 +10,7 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Vector;
+import java.util.Collections;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -46,7 +47,7 @@ public class Driver {
 				    canAdd=true;
 				}
 			} else if ((eventType == XmlPullParser.TEXT) && (canAdd)) {
-			    debug+="@"+parser.getText()+"\n";
+			    //debug+="@"+parser.getText()+"\n";
 			    sp.addString(parser.getText());
 			    canAdd=false;
 			} else if (eventType == XmlPullParser.END_TAG) {
@@ -61,11 +62,114 @@ public class Driver {
 		}
     }
 
+    private void addToVector(Vector<String> v, String toAdd) {
+	if(!v.contains(toAdd))
+	    v.add(toAdd);
+    }
+
+    private void parseXML(File file) throws IOException{
+	try {
+   	        if(file.isFile()==false)return;
+
+		XmlPullParser parser = Xml.newPullParser();
+		parser.setInput(new FileReader(file));
+		int eventType = -1;
+		Boolean canAdd=false;
+		Boolean canAddArray=false;
+		eventType = parser.getEventType();
+		while (eventType != XmlPullParser.END_DOCUMENT) {
+			if (eventType == XmlPullParser.START_TAG) {
+			    String name=parser.getName();
+			    if(tsp.contains(name)) {
+				String value=parser.getAttributeValue(null,"name");
+				if(value!=null)addToVector(ksp, value);
+			    }
+			    if ("string".equals(name)) {
+				    canAdd=true;
+				} else if ("string-array".equals(name)) {
+				    canAddArray=true;
+			    } else if ("item".equals(name)){
+				if (canAddArray) {
+				    canAdd=true;
+				}else {
+				    String type=parser.getAttributeValue(null,"type");
+				    if((type!=null) && (type.equals("id"))) {
+					addToVector(ksp, parser.getAttributeValue(null,"name"));
+				    }
+				}
+			    }
+			} else if ((eventType == XmlPullParser.TEXT) && (canAdd)) {
+			    canAdd=false;
+			    addToVector(sp,parser.getText());
+			} else if (eventType == XmlPullParser.END_TAG) {
+			    if ("string-array".equals(parser.getName())) {
+				    canAddArray=false;
+			    }
+			}
+			eventType = parser.next();			
+		}
+		} catch (XmlPullParserException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    Vector<String> sp = new Vector<String>();
+    Vector<String> tsp = new Vector<String>();
+    Vector<String> ksp = new Vector<String>();
+
+    public void doTheMagic() throws IOException{
+        tsp.add("attr");
+        tsp.add("drawable");
+        tsp.add("mipmap");
+        tsp.add("layout");
+        tsp.add("xml");
+        tsp.add("raw");
+        tsp.add("string");
+        tsp.add("color");
+        tsp.add("dimen");
+        tsp.add("style");
+        tsp.add("id");
+        tsp.add("array");
+        tsp.add("menu");
+
+	String pkgAbsolutePath = srcDir.getAbsolutePath();
+	debug="-Magic-\n";
+	File resDir = new File(srcDir, "res");
+	String[] resDirs = resDir.list();
+	if (resDirs != null)
+	  for (String dir : resDirs) {
+		File rd = new File(resDir, dir);
+		if (rd.isDirectory()) {
+			String[] dirNameParts = dir.split("-");
+			Config cfg = Config.fromDirNameParts(dirNameParts);
+			String[] resFiles = rd.list();
+			for (String resFileName : resFiles) {
+			    File rf = new File(rd, resFileName);
+			    if (rf.isFile()) {
+				String relativePath = rf.getAbsolutePath();
+				if (relativePath.startsWith(pkgAbsolutePath)) {
+				    relativePath = relativePath.substring(pkgAbsolutePath.length());
+				}
+
+			      if("values".equals(dirNameParts[0])==false) {
+			        addToVector(tsp,dirNameParts[0]);
+				addToVector(sp,relativePath);
+				String[] fnParts = resFileName.split("\\.");
+			        addToVector(ksp,fnParts[0]);
+			      }
+			      parseXML(rf);
+			    }
+			}
+		}
+	}
+    }
+
 	public void createResourceTable(OutputStream output) throws IOException {
+		Package pkg = new Package();
 		String pkgAbsolutePath = srcDir.getAbsolutePath();
 		StringPool topLevelStringPool = new StringPool();
 		topLevelStringPool.setUseUTF8(true);
-  
+		/*
 		debug="";
 		debug+="Driver\n";
 		debug+="Dir list\n";
@@ -85,6 +189,7 @@ public class Driver {
 				if (resourceGroup == null) {
 					resourceGroup = new AaptResourceGroup();
 					resourceGroups.put(dirNameParts[0], resourceGroup);
+					pkg.addTypeString(dirNameParts[0]);
 				}
 				if (dirNameParts[0].equals("values")) {
 				  Config cfg = Config.fromDirNameParts(dirNameParts);
@@ -112,7 +217,48 @@ public class Driver {
 			      }
 			}
 		}
+		*/
+		/* "First time through: only add base packages (id is not 0);
+		 *  second time through add the other packages.
+		 */
+		doTheMagic();
+		pkg.setId(127);
+		pkg.setName(getPackageName());
+
+		debug+="-StringPool="+sp.size()+"\n";
+		for(int i=0;i<sp.size();i++) {
+		    debug+=sp.get(i)+"\n";
+		    topLevelStringPool.addString(sp.get(i));
+		}
+
+		debug+="-Type StringPool="+tsp.size()+"\n";
+		for(int i=0;i<tsp.size();i++) {
+		    debug+=tsp.get(i)+"\n";
+		    pkg.addTypeString(tsp.get(i));
+		}
+
+		Collections.sort(ksp);
+		debug+="-Key StringPool="+ksp.size()+"\n";
+		for(int i=0;i<ksp.size();i++) {
+		    debug+=ksp.get(i)+"\n";
+		    pkg.addKeyString(ksp.get(i));
+		}
+
+
+		Table resourceTable = new Table();
+		resourceTable.setStringPool(topLevelStringPool);
+		resourceTable.addPackage(pkg);
 		
+		ResourceArchive resourceArchive = new ResourceArchive();
+		resourceArchive.addComponent(resourceTable);
+		debug+=resourceArchive.computeSize();
+		resourceArchive.write(output);
+
+	}
+
+    String debug="";
+
+    private String getPackageName() throws IOException {
 		String packageName = null;
 		try {
 		File manifestFile = new File(srcDir, "AndroidManifest.xml");
@@ -132,39 +278,8 @@ public class Driver {
 		} catch (XmlPullParserException e) {
 			e.printStackTrace();
 		}
-
-		debug+=packageName+"\n";
-		
-
-		Package pkg = new Package();
-		/* "First time through: only add base packages (id is not 0);
-		 *  second time through add the other packages.
-		 */
-		pkg.setId(1);
-        pkg.setName(packageName);
-	        debug+="resource added to pkg\n";
-		for (String resourceTypeName : resourceGroups.keySet()) {
-			pkg.addTypeString(resourceTypeName);
-			debug+=resourceTypeName+"\n";
-		}
-
-		debug+="stringpool\n";
-		Vector<String> strings=topLevelStringPool.getStrings();
-		for(int i=0;i<strings.size();i++)
-		    debug+=strings.get(i)+"\n";
-		debug+=strings.size()+"===\n";
-		Table resourceTable = new Table();
-		resourceTable.setStringPool(topLevelStringPool);
-		resourceTable.addPackage(pkg);
-		
-		ResourceArchive resourceArchive = new ResourceArchive();
-		resourceArchive.addComponent(resourceTable);
-		debug+=resourceArchive.computeSize();
-		resourceArchive.write(output);
-
-	}
-
-    String debug="";
+		return packageName;
+    }
 
     public String getDebug() {
 	return debug;
