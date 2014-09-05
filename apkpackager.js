@@ -17,7 +17,7 @@ module.exports.makeapk = function() {
 //  function onInitFs(fs) {
 
     // need a native compatible absolute path that ends with /
-    var workdir = 'file:///storage/sdcard0/Download/test/'; //fs.root.toURL()+'Download/';
+    var workdir = 'file:///storage/sdcard0/Download/test-apk/'; //fs.root.toURL()+'Download/';
     var wwwdir = workdir+'wwwsrc';
     var resdir = workdir+'ressrc';
     var publicKeyURL = workdir+"pub.x509.pem";

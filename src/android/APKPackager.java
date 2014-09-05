@@ -28,6 +28,8 @@ import android.util.Log;
 import com.android.sdklib.build.*;
 import org.spongycastle.jce.provider.BouncyCastleProvider;
 
+import com.axml.enddec.BinaryXMLParser;
+
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaArgs;
 import org.apache.cordova.CordovaInterface;
@@ -92,7 +94,7 @@ public class APKPackager  extends CordovaPlugin {
         File assetsname = new File(workdir, "assets.zip");
 
     	String workdirpath=workdir.getAbsolutePath()+File.separator;
-        String generatedApkPath = workdirpath+"test.apk";
+        String generatedApkPath = workdirpath+"andreiapp.apk";
         String signedApkPath=workdirpath+"test-signed.apk";
         String dexname = workdirpath+ "classes.dex";
 	File tempDir = new File(workdir,"temp");
@@ -101,7 +103,18 @@ public class APKPackager  extends CordovaPlugin {
         File tempassets = new File(workdir,"tempasset");
         File mangledResourceDir= new File(workdir, "binres");
         File finalResDir =new File(mangledResourceDir,"res");
+	
+	try {
+          BinaryXMLParser parser = new BinaryXMLParser(workdir+"/temp/AndroidManifest.xml");
+  	  parser.parseXML();
+	  parser.changeString(parser.getPackageName(), "com.example.alextest.blabla");
+  	  parser.exportXML(workdir+"/temp/AndroidManifest.xml");
 
+	} catch (Exception e) {
+	    callbackContext.error("Error at parsing: "+e.getMessage());
+	}
+
+	/*
         try {
         	deleteDir(tempres);
         	deleteDir(tempassets);
@@ -140,12 +153,12 @@ public class APKPackager  extends CordovaPlugin {
 
         try {
             copyFile(new File(workdir,"AndroidManifest.xml"), new File(tempres,"AndroidManifest.xml"));
-            mangleResources(tempres, mangledResourceDir);
+            //mangleResources(tempres, mangledResourceDir);
         } catch (Exception e) {
             callbackContext.error("Error indexing resources: "+e.getMessage());
             return;
         }
-	/*
+	*/
         // take the completed package and make the unsigned APK
         try{
             // ApkBuilder REALLY wants a resource zip file in the contructor
@@ -154,7 +167,7 @@ public class APKPackager  extends CordovaPlugin {
             writeZipfile(fakeResZip);
 
             ApkBuilder b = new ApkBuilder(generatedApkPath,fakeResZip.getPath(),dexname,null,null,null);
-	    b.addSourceFolder( tempDir);
+	    b.addSourceFolder(tempDir);
             //b.addSourceFolder( tempassets);
             //b.addSourceFolder( finalResDir);
             //b.addFile(new File(mangledResourceDir,"resources.arsc"), "resources.arsc");
@@ -188,8 +201,8 @@ public class APKPackager  extends CordovaPlugin {
             callbackContext.error("Error cleaning up: "+e.getMessage());
             return;
 	}
-*/
-        callbackContext.success(returnMsg);
+
+        callbackContext.success("succes");
     }
 
     private void deleteDir(File dir){

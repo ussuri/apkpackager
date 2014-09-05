@@ -27,43 +27,8 @@ public class Driver {
 		this.destDir = destResDir;
 	}
 	
-    private void parseStringXml(StringPool sp, File file) throws IOException{
-	try {
-   	        if(file.isFile()==false)return;
-		XmlPullParser parser = Xml.newPullParser();
-		parser.setInput(new FileReader(file));
-		int eventType = -1;
-		Boolean canAdd=false;
-		Boolean canAddArray=false;
-		eventType = parser.getEventType();
-		while (eventType != XmlPullParser.END_DOCUMENT) {
-			if (eventType == XmlPullParser.START_TAG) {
-				if ("string".equals(parser.getName())) {
-				    canAdd=true;
-				    //sp.addString(parser.getText());
-				} else if ("string-array".equals(parser.getName())) {
-				    canAddArray=true;
-				} else if ("item".equals(parser.getName()) && canAddArray) {
-				    canAdd=true;
-				}
-			} else if ((eventType == XmlPullParser.TEXT) && (canAdd)) {
-			    //debug+="@"+parser.getText()+"\n";
-			    sp.addString(parser.getText());
-			    canAdd=false;
-			} else if (eventType == XmlPullParser.END_TAG) {
-			    if ("string-array".equals(parser.getName())) {
-				    canAddArray=false;
-			    }
-			}
-			eventType = parser.next();			
-		}
-		} catch (XmlPullParserException e) {
-			e.printStackTrace();
-		}
-    }
-
     private void addToVector(Vector<String> v, String toAdd) {
-	if(!v.contains(toAdd))
+	if(!v.contains(toAdd) || (v==ksp))
 	    v.add(toAdd);
     }
 
@@ -82,7 +47,7 @@ public class Driver {
 			    String name=parser.getName();
 			    if(tsp.contains(name)) {
 				String value=parser.getAttributeValue(null,"name");
-				if(value!=null)addToVector(ksp, value);
+				//if(value!=null)addToVector(ksp, value);
 			    }
 			    if ("string".equals(name)) {
 				    canAdd=true;
@@ -94,7 +59,7 @@ public class Driver {
 				}else {
 				    String type=parser.getAttributeValue(null,"type");
 				    if((type!=null) && (type.equals("id"))) {
-					addToVector(ksp, parser.getAttributeValue(null,"name"));
+					//addToVector(ksp, parser.getAttributeValue(null,"name"));
 				    }
 				}
 			    }
@@ -118,20 +83,6 @@ public class Driver {
     Vector<String> ksp = new Vector<String>();
 
     public void doTheMagic() throws IOException{
-        tsp.add("attr");
-        tsp.add("drawable");
-        tsp.add("mipmap");
-        tsp.add("layout");
-        tsp.add("xml");
-        tsp.add("raw");
-        tsp.add("string");
-        tsp.add("color");
-        tsp.add("dimen");
-        tsp.add("style");
-        tsp.add("id");
-        tsp.add("array");
-        tsp.add("menu");
-
 	String pkgAbsolutePath = srcDir.getAbsolutePath();
 	debug="-Magic-\n";
 	File resDir = new File(srcDir, "res");
@@ -155,9 +106,9 @@ public class Driver {
 			        addToVector(tsp,dirNameParts[0]);
 				addToVector(sp,relativePath);
 				String[] fnParts = resFileName.split("\\.");
-			        addToVector(ksp,fnParts[0]);
+
 			      }
-			      parseXML(rf);
+			      //parseXML(rf);
 			    }
 			}
 		}
