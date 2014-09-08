@@ -2,31 +2,30 @@
 var exec = cordova.require('cordova/exec');
 
 
-module.exports.makeapk = function() {
+module.exports.makeapk = function(name) {
 
   function pkgSuccess( msg ) {
       console.log(msg);
-     //if(success) success();
   }
 
   function pkgFail(msg) {
     console.log('Error: ' + msg);
-    //if(failure) failure(msg);
   }
 
-//  function onInitFs(fs) {
-
     // need a native compatible absolute path that ends with /
+    /*
+      in the working directory I will have a
+      - template dirctory containing everything that is in the APK - the class.dex 
+      - class.dex
+      - the provided signing keys
+     */
+    // the only thing require to pass will be the workdir and the path to the keys.
     var workdir = 'file:///storage/sdcard0/Download/test-apk/'; //fs.root.toURL()+'Download/';
-    var wwwdir = workdir+'wwwsrc';
-    var resdir = workdir+'ressrc';
     var publicKeyURL = workdir+"pub.x509.pem";
     var privateKeyURL = workdir+"pk8p.pk8";
     var passwd="android";      // password for private key
-    exec(pkgSuccess, pkgFail, 'APKPackager', 'package', [wwwdir, resdir, workdir, publicKeyURL, privateKeyURL, passwd]);
-//  }
-
-//  window.requestFileSystem(window.PERSISTENT, 20*1024*1024, onInitFs, pkgFail);
+    console.log(name);
+    exec(pkgSuccess, pkgFail, 'APKPackager', 'package', [workdir, publicKeyURL, privateKeyURL, passwd,name]);
 
 }
 
