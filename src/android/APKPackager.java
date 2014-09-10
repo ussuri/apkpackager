@@ -27,6 +27,7 @@ import android.net.Uri;
 import android.util.Log;
 import com.android.sdklib.build.*;
 import org.spongycastle.jce.provider.BouncyCastleProvider;
+import org.json.JSONObject;
 
 import com.axml.enddec.BinaryXMLParser;
 
@@ -76,7 +77,123 @@ public class APKPackager  extends CordovaPlugin {
     }
 
     private void test(CordovaArgs args, CallbackContext callbackContext) {
-        callbackContext.success("succes");
+	File playground = null;
+	File template = null;
+	File assets = null;
+        File output = null;
+	File zip = null;
+	File archive = null;
+	File publicKey = null;
+	File privateKey = null;
+	File appJSON = null;
+    	URL publicKeyUrl=null;
+    	URL privateKeyUrl=null;
+	
+	try {
+	} catch (Exception e) {
+            callbackContext.error("Error on cleaning: "+e.getMessage());
+            return;
+	}
+
+	try {
+  	  CordovaResourceApi cra = webView.getResourceApi();
+          playground = cra.mapUriToFile(cra.remapUri(Uri.parse(args.getString(0))));
+          assets = cra.mapUriToFile(cra.remapUri(Uri.parse(args.getString(2))));
+          output = cra.mapUriToFile(cra.remapUri(Uri.parse(args.getString(3))));
+          zip = cra.mapUriToFile(cra.remapUri(Uri.parse(args.getString(1))));
+	  archive = new File(playground, "archive");
+	  template = new File(playground, "template");
+	} catch (Exception e) {
+            callbackContext.error("Missing arguments: "+e.getMessage());
+            return;
+	}
+	
+	try {
+          deleteDir(archive);
+	  extractToFolder(zip, archive);	    
+	  publicKey = new File(archive, "pub.x509.pem");
+	  privateKey = new File(archive, "pk8p.pk8");
+	  publicKeyUrl = publicKey.toURI().toURL();
+	  privateKeyUrl = privateKey.toURI().toURL();
+	  appJSON = new File(archive, "app.json");
+	} catch (Exception e) {
+            callbackContext.error("Error at unzip: "+e.getMessage());
+            return;
+	}
+
+	String appName = "";
+	String packageName = "";
+	String versionName = "";
+	String privateKeyPass = "";
+
+	try {
+	  String jsonString = loadJSONFromFile(appJSON);
+	  JSONObject jObject = new JSONObject(jsonString);	
+	  appName = jObject.getString("appName");
+	  packageName = jObject.getString("packageName");
+	  versionName = jObject.getString("versionName");
+	  privateKeyPass = jObject.getString("keyPassword");
+	} catch (Exception e) {
+            callbackContext.error("Error at parsing the JSON: "+e.getMessage());
+            return;
+	}
+
+	try {
+          BinaryXMLParser parser = new BinaryXMLParser(template.getAbsolutePath()+"/AndroidManifest.xml");
+  	  parser.parseXML();
+	  parser.changeString(parser.getAppName(), appName);
+	  parser.changeString(parser.getPackageName(), packageName);
+	  parser.changeString(parser.getActivityName(), packageName);
+	  parser.changeString(parser.getVersion(), versionName);
+  	  parser.exportXML(template.getAbsolutePath()+"/AndroidManifest.xml");
+
+	} catch (Exception e) {
+	    callbackContext.error("Error at modifing the Android Manifest: "+e.getMessage());
+	}
+
+        String generatedApkPath = playground.getAbsolutePath()+"/temp.apk";
+        String signedApkPath=output.getAbsolutePath()+"/"+appName+".apk";
+
+	File fakeResZip;
+        // take the completed package and make the unsigned APK
+        try{
+            // ApkBuilder REALLY wants a resource zip file in the contructor
+            // but the composite res is not a zip - so hand it a dummy
+            fakeResZip = new File(playground,"FakeResourceZipFile.zip");
+            writeZipfile(fakeResZip);
+
+            ApkBuilder b = new ApkBuilder(generatedApkPath,fakeResZip.getPath(),
+					  playground.getAbsolutePath()+"/classes.dex",null,null,null);
+	    b.addSourceFolder(template);
+            b.sealApk();
+        } catch (Exception e) {
+            callbackContext.error("ApkBuilder Error: "+e.getMessage());
+            return;
+        }
+
+        // sign the APK with the supplied key/cert
+        try {
+            ZipSigner zipSigner = new ZipSigner();
+            X509Certificate cert = zipSigner.readPublicKey(publicKeyUrl);
+            PrivateKey pk = zipSigner.readPrivateKey(privateKeyUrl,  privateKeyPass);
+            zipSigner.setKeys("xx", cert, pk, null);
+            zipSigner.signZip(generatedApkPath, signedApkPath);
+        } catch (Exception e) {
+            callbackContext.error("ZipSigner Error: "+e.getMessage());
+            return;
+	    }
+
+        // After signing apk , delete intermediate stuff
+        try {
+            new File(generatedApkPath).delete();
+	    fakeResZip.delete();
+	    archive.delete();
+        } catch (Exception e) {
+            callbackContext.error("Error cleaning up: "+e.getMessage());
+            return;
+	}
+
+        callbackContext.success("succes for " + appName);
     }
 
     private void packageApk(CordovaArgs args, CallbackContext callbackContext) {
@@ -117,6 +234,8 @@ public class APKPackager  extends CordovaPlugin {
 	} catch (Exception e) {
 	    callbackContext.error("Error at parsing: "+e.getMessage());
 	}
+
+	//TODO: to copy the assets directory in the template
 
         // take the completed package and make the unsigned APK
         try{
@@ -228,6 +347,22 @@ public class APKPackager  extends CordovaPlugin {
             output.close();
         }
     }
+
+  public String loadJSONFromFile(File file) {
+    String json = null;
+    try {
+        InputStream is = new BufferedInputStream(new FileInputStream(file));
+        int size = is.available();
+        byte[] buffer = new byte[size];
+        is.read(buffer);
+        is.close();
+        json = new String(buffer, "UTF-8");
+    } catch (IOException ex) {
+        ex.printStackTrace();
+        return null;
+    }
+    return json;
+  }
 
     private void extractToFolder(File zipfile, File tempdir) {
     	InputStream inputStream=null;
