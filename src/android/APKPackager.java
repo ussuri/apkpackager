@@ -63,8 +63,20 @@ public class APKPackager  extends CordovaPlugin {
                 }
             });
             return true;
-        }
+        } else if ("packageAPK".equals(action)) {
+            cordova.getThreadPool().execute(new Runnable() {
+                @Override
+                public void run() {
+                    test(args, callbackContext);
+                }
+            });
+            return true;
+        } 
         return false;
+    }
+
+    private void test(CordovaArgs args, CallbackContext callbackContext) {
+        callbackContext.success("succes");
     }
 
     private void packageApk(CordovaArgs args, CallbackContext callbackContext) {

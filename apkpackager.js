@@ -1,17 +1,20 @@
 
 var exec = cordova.require('cordova/exec');
 
+function pkgSuccess( msg ) {
+      console.log(msg);
+}
+
+function pkgFail(msg) {
+    console.log('Error: ' + msg);
+}
+
+
+module.exports.buildAPK =  function(zipPath, assetsPath, outputPath, templatePath) {
+    exec(pkgSuccess, pkgFail, 'APKPackager', 'packageAPK', [templatePath, zipPath, assetsPath, outputPath]);
+}
 
 module.exports.makeapk = function(name) {
-
-  function pkgSuccess( msg ) {
-      console.log(msg);
-  }
-
-  function pkgFail(msg) {
-    console.log('Error: ' + msg);
-  }
-
     // need a native compatible absolute path that ends with /
     /*
       in the working directory I will have a
