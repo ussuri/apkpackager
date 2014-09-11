@@ -154,6 +154,17 @@ public class APKPackager  extends CordovaPlugin {
         String generatedApkPath = playground.getAbsolutePath()+"/temp.apk";
         String signedApkPath=output.getAbsolutePath()+"/"+appName+".apk";
 
+
+	//TODO: to copy the assets directory in the template
+	try {
+	    File destAssets = new File(template, "assets");
+	    deleteDirContent(destAssets);
+	    mergeDirectory(assets, destAssets);
+	} catch (Exception e) {
+            callbackContext.error("Error at assets copy: "+e.getMessage());
+            return;
+	}
+
 	File fakeResZip;
         // take the completed package and make the unsigned APK
         try{
@@ -187,7 +198,7 @@ public class APKPackager  extends CordovaPlugin {
         try {
             new File(generatedApkPath).delete();
 	    fakeResZip.delete();
-	    archive.delete();
+	    deleteDir(archive);
         } catch (Exception e) {
             callbackContext.error("Error cleaning up: "+e.getMessage());
             return;
@@ -297,6 +308,15 @@ public class APKPackager  extends CordovaPlugin {
         out.close();
     }
     
+    private void deleteDirContent(File dir) {
+      if (dir.isDirectory()) {
+        String[] children = dir.list();
+        for (int i = 0; i < children.length; i++) {
+            new File(dir, children[i]).delete();
+        }
+      }
+    }
+
     private void writeStringToFile(String str, File target) {
     	FileWriter fw=null;
     	try {
