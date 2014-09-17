@@ -13,7 +13,7 @@ function pkgFail(msg) {
 module.exports.buildAPK =  function(zipPath, assetsPath, outputPath, templatePath) {
     exec(pkgSuccess, pkgFail, 'APKPackager', 'packageAPK', [templatePath, zipPath, assetsPath, outputPath]);
 }
-
+/*
 module.exports.makeapk = function(name) {
     // need a native compatible absolute path that ends with /
     /*
@@ -30,5 +30,5 @@ module.exports.makeapk = function(name) {
     console.log(name);
     exec(pkgSuccess, pkgFail, 'APKPackager', 'package', [workdir, publicKeyURL, privateKeyURL, passwd,name]);
 
-}
+}*/
 
