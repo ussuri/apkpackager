@@ -57,19 +57,11 @@ public class APKPackager  extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, final CordovaArgs args, final CallbackContext callbackContext) throws JSONException {
-        if ("package".equals(action)) {
+        if ("packageAPK".equals(action)) {
             cordova.getThreadPool().execute(new Runnable() {
                 @Override
                 public void run() {
-                    //packageApk(args, callbackContext);
-                }
-            });
-            return true;
-        } else if ("packageAPK".equals(action)) {
-            cordova.getThreadPool().execute(new Runnable() {
-                @Override
-                public void run() {
-                    test(args, callbackContext);
+                    pack(args, callbackContext);
                 }
             });
             return true;
@@ -77,7 +69,7 @@ public class APKPackager  extends CordovaPlugin {
         return false;
     }
 
-    private void test(CordovaArgs args, CallbackContext callbackContext) {
+    private void pack(CordovaArgs args, CallbackContext callbackContext) {
 	File playground = null;
 	File template = null;
 	File assets = null;
@@ -213,86 +205,6 @@ public class APKPackager  extends CordovaPlugin {
 
         callbackContext.success("succes for " + appName);
     }
-
-    /*
-    private void packageApk(CordovaArgs args, CallbackContext callbackContext) {
-    	File workdir=null;
-    	URL publicKeyUrl=null;
-    	URL privateKeyUrl=null;
-    	String keyPassword="";
-	String appName="test";
-    
-    	try {
-    		CordovaResourceApi cra = webView.getResourceApi();
-	        workdir= cra.mapUriToFile(cra.remapUri(Uri.parse(args.getString(0))));
-	        File pbk = cra.mapUriToFile(cra.remapUri(Uri.parse(args.getString(1))));
-	        File pvk = cra.mapUriToFile(cra.remapUri(Uri.parse(args.getString(2))));
-	        publicKeyUrl = pbk.toURI().toURL();
-	        privateKeyUrl= pvk.toURI().toURL();
-	        keyPassword= args.getString(3);
-		appName = args.getString(4);
-        } catch (Exception e) {
-            callbackContext.error("Missing arguments: "+e.getMessage());
-            return;
-        }
-    	String workdirpath=workdir.getAbsolutePath()+File.separator;
-        String generatedApkPath = workdirpath+"app.apk";
-        String signedApkPath=workdirpath+appName+"-signed.apk";
-        String dexname = workdirpath+ "classes.dex";
-	String templatedir=workdirpath+"template/";
-	File templateDir = new File(workdir,"template");
-	try {
-          BinaryXMLParser parser = new BinaryXMLParser(templatedir+"AndroidManifest.xml");
-  	  parser.parseXML();
-	  //parser.changeString(parser.getAppName(), appName);
-	  parser.changeString(parser.getPackageName(), "com.example"+appName);
-	  parser.changeString(parser.getActivityName(), "A "+appName);
-	  parser.changeString(parser.getVersion(), "2.2.1");
-  	  parser.exportXML(templatedir+"AndroidManifest.xml");
-
-	} catch (Exception e) {
-	    callbackContext.error("Error at parsing: "+e.getMessage());
-	}
-
-	//TODO: to copy the assets directory in the template
-
-        // take the completed package and make the unsigned APK
-        try{
-            // ApkBuilder REALLY wants a resource zip file in the contructor
-            // but the composite res is not a zip - so hand it a dummy
-            File fakeResZip = new File(workdir,"FakeResourceZipFile.zip");
-            writeZipfile(fakeResZip);
-
-            ApkBuilder b = new ApkBuilder(generatedApkPath,fakeResZip.getPath(),dexname,null,null,null);
-	    b.addSourceFolder(templateDir);
-            b.sealApk();
-        } catch (Exception e) {
-            callbackContext.error("ApkBuilder Error: "+e.getMessage());
-            return;
-        }
-
-        // sign the APK with the supplied key/cert
-        try {
-            ZipSigner zipSigner = new ZipSigner();
-            X509Certificate cert = zipSigner.readPublicKey(publicKeyUrl);
-            PrivateKey privateKey = zipSigner.readPrivateKey(privateKeyUrl,  keyPassword);
-            zipSigner.setKeys("xx", cert, privateKey, null);
-            zipSigner.signZip(generatedApkPath, signedApkPath);
-        } catch (Exception e) {
-            callbackContext.error("ZipSigner Error: "+e.getMessage());
-            return;
-	    }
-
-        // After signing apk , delete intermediate stuff
-        try {
-            new File(generatedApkPath).delete();
-        } catch (Exception e) {
-            callbackContext.error("Error cleaning up: "+e.getMessage());
-            return;
-	}
-
-        callbackContext.success("succes");
-    }*/
 
     private void deleteDir(File dir){
         if(!dir.exists()) return;
