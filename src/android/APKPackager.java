@@ -30,6 +30,7 @@ import org.spongycastle.jce.provider.BouncyCastleProvider;
 import org.json.JSONObject;
 
 import com.axml.enddec.BinaryXMLParser;
+import com.axml.enddec.BinaryResourceParser;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaArgs;
@@ -60,7 +61,7 @@ public class APKPackager  extends CordovaPlugin {
             cordova.getThreadPool().execute(new Runnable() {
                 @Override
                 public void run() {
-                    packageApk(args, callbackContext);
+                    //packageApk(args, callbackContext);
                 }
             });
             return true;
@@ -139,13 +140,19 @@ public class APKPackager  extends CordovaPlugin {
 	}
 
 	try {
-          BinaryXMLParser parser = new BinaryXMLParser(template.getAbsolutePath()+"/AndroidManifest.xml");
+	  BinaryXMLParser parser = new BinaryXMLParser(template.getAbsolutePath()+"/AndroidManifest.xml");
   	  parser.parseXML();
 	  parser.changeString(parser.getAppName(), appName);
 	  parser.changeString(parser.getPackageName(), packageName);
-	  parser.changeString(parser.getActivityName(), packageName);
+	  parser.changeString(parser.getActivityName(), appName);
 	  parser.changeString(parser.getVersion(), versionName);
   	  parser.exportXML(template.getAbsolutePath()+"/AndroidManifest.xml");
+
+	  BinaryResourceParser resParser = new BinaryResourceParser(template.getAbsolutePath()+"/resources.arsc");
+	  resParser.parseResource();
+	  resParser.changePackageName(packageName);
+	  //resParser.changePackageName("org.chromium.cadt.template");
+	  resParser.exportResource(template.getAbsolutePath()+"/resources.arsc");
 
 	} catch (Exception e) {
 	    callbackContext.error("Error at modifing the Android Manifest: "+e.getMessage());
@@ -207,6 +214,7 @@ public class APKPackager  extends CordovaPlugin {
         callbackContext.success("succes for " + appName);
     }
 
+    /*
     private void packageApk(CordovaArgs args, CallbackContext callbackContext) {
     	File workdir=null;
     	URL publicKeyUrl=null;
@@ -236,7 +244,7 @@ public class APKPackager  extends CordovaPlugin {
 	try {
           BinaryXMLParser parser = new BinaryXMLParser(templatedir+"AndroidManifest.xml");
   	  parser.parseXML();
-	  parser.changeString(parser.getAppName(), appName);
+	  //parser.changeString(parser.getAppName(), appName);
 	  parser.changeString(parser.getPackageName(), "com.example"+appName);
 	  parser.changeString(parser.getActivityName(), "A "+appName);
 	  parser.changeString(parser.getVersion(), "2.2.1");
@@ -284,7 +292,7 @@ public class APKPackager  extends CordovaPlugin {
 	}
 
         callbackContext.success("succes");
-    }
+    }*/
 
     private void deleteDir(File dir){
         if(!dir.exists()) return;
@@ -309,12 +317,16 @@ public class APKPackager  extends CordovaPlugin {
     }
     
     private void deleteDirContent(File dir) {
-      if (dir.isDirectory()) {
-        String[] children = dir.list();
-        for (int i = 0; i < children.length; i++) {
-            new File(dir, children[i]).delete();
+        if(!dir.exists()) return;
+        if(dir.isDirectory()) {
+            File [] files = dir.listFiles();
+            if(files != null) {
+                for( File f : files ) {
+    	            if(f.isDirectory()) deleteDir(f);
+    	            else f.delete();
+                }
+            }
         }
-      }
     }
 
     private void writeStringToFile(String str, File target) {
