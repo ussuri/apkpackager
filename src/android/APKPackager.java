@@ -100,15 +100,10 @@ public class APKPackager  extends CordovaPlugin {
             callbackContext.error("Missing arguments: "+e.getMessage());
             return;
 	}
-	
+
 	try {
           deleteDir(archive);
 	  extractToFolder(zip, archive);	    
-	  publicKey = new File(archive, "pub.x509.pem");
-	  privateKey = new File(archive, "pk8p.pk8");
-	  publicKeyUrl = publicKey.toURI().toURL();
-	  privateKeyUrl = privateKey.toURI().toURL();
-	  appJSON = new File(archive, "app.json");
 	} catch (Exception e) {
             callbackContext.error("Error at unzip: "+e.getMessage());
             return;
@@ -118,18 +113,28 @@ public class APKPackager  extends CordovaPlugin {
 	String packageName = "";
 	String versionName = "";
 	String privateKeyPass = "";
-
+	String publicKeyName = "";
+	String privateKeyName = "";
 	try {
+	  appJSON = new File(archive, "app.json");
 	  String jsonString = loadJSONFromFile(appJSON);
 	  JSONObject jObject = new JSONObject(jsonString);	
 	  appName = jObject.getString("appName");
 	  packageName = jObject.getString("packageName");
 	  versionName = jObject.getString("versionName");
 	  privateKeyPass = jObject.getString("keyPassword");
+	  publicKeyName = jObject.getString("publicKeyName");
+	  privateKeyName = jObject.getString("privateKeyName");
+
+	  publicKey = new File(archive, publicKeyName);
+	  privateKey = new File(archive, privateKeyName);
+	  publicKeyUrl = publicKey.toURI().toURL();
+	  privateKeyUrl = privateKey.toURI().toURL();
 	} catch (Exception e) {
             callbackContext.error("Error at parsing the JSON: "+e.getMessage());
             return;
 	}
+
 
 	try {
 	  BinaryXMLParser parser = new BinaryXMLParser(template.getAbsolutePath()+"/AndroidManifest.xml");
