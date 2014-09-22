@@ -162,8 +162,10 @@ public class APKPackager  extends CordovaPlugin {
 	//TODO: to copy the assets directory in the template
 	try {
 	    File destAssets = new File(template, "assets");
+	    File pluginAssets = new File(playground, "plugins");
 	    deleteDirContent(destAssets);
 	    mergeDirectory(assets, destAssets);
+	    mergeDirectory(pluginAssets, destAssets);
 	} catch (Exception e) {
             callbackContext.error("Error at assets copy: "+e.getMessage());
             return;
