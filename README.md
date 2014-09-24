@@ -9,14 +9,23 @@ Not suitable for other platforms
 
 ## Notes
 
-This demo functionality requires that the following are available in the Downloads directory of the device
-* a directory containing the custom ww assets (wwwsrc)
-* a directory containing the custom res (ressrc)
-* a file containing the dexed code (classes.dex)
-* a zip file of the default res (res.zip)
-* a zip file of the default assests (assets.zip)
-* the www directory to include
-* the developers public key (pub.x509.pem)
-* the developers private key (pk8p.pk8)
-* the keystore passphrase must be 'android'
+This demo functionality requires that the following are available
+* a directory containing the custom template apk
+* a zip file containing public key (pub.x509.pem), private key (pk8p.pk8) and a JSON file(app.json)
+* a directory containing the new assets directory
+
+API requirements:
+* [templatePath, zipPath, assetsPath, outputPath]
+
+JSON file example in the zip:
+{  
+   "appName":"HelloWorld",
+   "packageName":"com.example.helloworld",
+   "versionName":"0.2.1.1",
+   "keyPassword":"android",
+   "publicKeyName":"pub.x509.pem",
+   "privateKeyName":"pk8p.pk8"
+}
+
+
 
