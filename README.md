@@ -18,14 +18,12 @@ API requirements:
 * [templatePath, zipPath, assetsPath, outputPath]
 
 JSON file example in the zip:
-{  
-   "appName":"HelloWorld",
-   "packageName":"com.example.helloworld",
-   "versionName":"0.2.1.1",
-   "keyPassword":"android",
-   "publicKeyName":"pub.x509.pem",
-   "privateKeyName":"pk8p.pk8"
-}
+*   "appName":"HelloWorld",
+*   "packageName":"com.example.helloworld",
+*   "versionName":"0.2.1.1",
+*   "keyPassword":"android",
+*   "publicKeyName":"pub.x509.pem",
+*   "privateKeyName":"pk8p.pk8"
 
 
 
