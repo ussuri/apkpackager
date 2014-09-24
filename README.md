@@ -26,4 +26,8 @@ JSON file example in the zip:
 *   "privateKeyName":"pk8p.pk8"
 
 
+Example command:
+chrome.apkpackager.buildAPK("file:///storage/sdcard0/Download/example/app.zip","file:///storage/sdcard0/Download/example/assets/","file:///storage/sdcard0/Download/example/","file:///storage/sdcard0/Download/example/")
+
+
 
