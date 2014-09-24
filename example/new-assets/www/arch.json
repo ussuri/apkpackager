@@ -1,0 +1,19 @@
+{
+  "manifest_version": 2,
+  "name": "app2",
+  "short_name": "app2",
+  "description": "Description for app2",
+
+  "version": "0.0.1.0",
+
+  "icons": {
+    "16": "assets/icon_16.png",
+    "128": "assets/icon_128.png"
+  },
+
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  }
+}
